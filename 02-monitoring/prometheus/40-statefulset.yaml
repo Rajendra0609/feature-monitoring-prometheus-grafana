@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+spec:
+  serviceName: prometheus
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prometheus
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.49.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=7d
+            - --storage.tsdb.retention.size=5GB
+            - --storage.tsdb.wal-compression
+            - --web.enable-lifecycle
+          ports:
+            - name: web
+              containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+              readOnly: true
+            - name: data
+              mountPath: /prometheus
+            - name: vault-metrics
+              mountPath: /etc/prometheus/secrets/vault
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: vault-metrics
+          secret:
+            secretName: vault-metrics-token
+            optional: true
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-storage
+        resources:
+          requests:
+            storage: 10Gi

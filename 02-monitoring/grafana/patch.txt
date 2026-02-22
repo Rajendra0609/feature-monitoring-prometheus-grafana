@@ -1,0 +1,2 @@
+kubectl -n monitoring patch svc grafana --type='json' \
+  -p='[{"op":"replace","path":"/spec/selector","value":{"app.kubernetes.io/name":"grafana"}}]'

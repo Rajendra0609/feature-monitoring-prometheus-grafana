@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets: ['127.0.0.1:9090']
+
+      # Node Exporter endpoints in node-metrics namespace
+      - job_name: node-exporter
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: node-metrics
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: node-exporter
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+          - source_labels: [__meta_kubernetes_endpoint_node_name]
+            target_label: instance
+            action: replace
+
+
+      # Jenkins metrics — expects a Service in jenkins namespace named jenkins-metrics.
+      # You can adjust the service name/port/labels as needed.
+      - job_name: jenkins
+        metrics_path: /prometheus
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: jenkins
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: jenkins-metrics
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: http
+
+      - job_name: kube-state-metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: kube-system
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: kube-state-metrics
+
+      - job_name: kubelet
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+        metrics_path: /metrics
+
+      - job_name: cadvisor
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        metrics_path: /metrics/cadvisor
+
+      - job_name: kube-apiserver
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: default
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: kubernetes
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: https

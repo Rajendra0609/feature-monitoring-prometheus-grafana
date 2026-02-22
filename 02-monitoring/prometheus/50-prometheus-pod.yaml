@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: 0a9a11ee98c96690eb0207588a70189ebab5df397065bced93b60db2feebd084
+    cni.projectcalico.org/podIP: 192.168.194.92/32
+    cni.projectcalico.org/podIPs: 192.168.194.92/32
+  creationTimestamp: "2026-01-25T09:33:03Z"
+  generateName: prometheus-
+  labels:
+    app.kubernetes.io/name: prometheus
+    apps.kubernetes.io/pod-index: "0"
+    controller-revision-hash: prometheus-85cd944f76
+    statefulset.kubernetes.io/pod-name: prometheus-0
+  name: prometheus-0
+  namespace: monitoring
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: StatefulSet
+    name: prometheus
+    uid: fcfff44d-f434-483e-a238-1cdee090753e
+  resourceVersion: "489882"
+  uid: 38db5352-a158-4d6e-87fb-630721bd38e2
+spec:
+  containers:
+  - args:
+    - --config.file=/etc/prometheus/prometheus.yml
+    - --storage.tsdb.path=/prometheus
+    - --storage.tsdb.retention.time=7d
+    - --storage.tsdb.retention.size=5GB
+    - --storage.tsdb.wal-compression
+    - --web.enable-lifecycle
+    image: prom/prometheus:v2.49.0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /-/healthy
+        port: 9090
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    name: prometheus
+    ports:
+    - containerPort: 9090
+      name: web
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /-/ready
+        port: 9090
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 800Mi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/prometheus
+      name: config
+      readOnly: true
+    - mountPath: /prometheus
+      name: data
+    - mountPath: /etc/prometheus/secrets/vault
+      name: vault-metrics
+      readOnly: true
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-kq2fs
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  hostname: prometheus-0
+  nodeName: k8s-worker1
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    fsGroup: 65534
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: prometheus
+  serviceAccountName: prometheus
+  subdomain: prometheus
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: data-prometheus-0
+  - configMap:
+      defaultMode: 420
+      name: prometheus-config
+    name: config
+  - name: vault-metrics
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: vault-metrics-token
+  - name: kube-api-access-kq2fs
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2026-01-25T09:33:08Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2026-01-25T09:33:03Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2026-01-25T09:33:49Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2026-01-25T09:33:49Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2026-01-25T09:33:03Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://3db8b9a5f631b2eab430271b002f3bee44ab8fdd5df96682302dc6491a1d44d5
+    image: docker.io/prom/prometheus:v2.49.0
+    imageID: docker.io/prom/prometheus@sha256:682a8500cb481ef780a4d60f6f1b273aae552063de02326f9f4645e395a18efc
+    lastState: {}
+    name: prometheus
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2026-01-25T09:33:07Z"
+    volumeMounts:
+    - mountPath: /etc/prometheus
+      name: config
+      readOnly: true
+      recursiveReadOnly: Disabled
+    - mountPath: /prometheus
+      name: data
+    - mountPath: /etc/prometheus/secrets/vault
+      name: vault-metrics
+      readOnly: true
+      recursiveReadOnly: Disabled
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-kq2fs
+      readOnly: true
+      recursiveReadOnly: Disabled
+  hostIP: 192.168.0.103
+  hostIPs:
+  - ip: 192.168.0.103
+  phase: Running
+  podIP: 192.168.194.92
+  podIPs:
+  - ip: 192.168.194.92
+  qosClass: Burstable
+  startTime: "2026-01-25T09:33:03Z"
