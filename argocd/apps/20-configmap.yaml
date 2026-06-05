@@ -8,7 +8,6 @@ data:
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
-
     scrape_configs:
       - job_name: prometheus
         static_configs:
@@ -32,9 +31,7 @@ data:
             target_label: instance
             action: replace
 
-
-      # Jenkins metrics — expects a Service in jenkins namespace named jenkins-metrics.
-      # You can adjust the service name/port/labels as needed.
+      # Jenkins metrics
       - job_name: jenkins
         metrics_path: /prometheus
         kubernetes_sd_configs:
@@ -115,3 +112,74 @@ data:
             action: keep
             regex: metrics
 
+      # ------------------------------------------------
+      # ArgoCD Metrics
+      # ------------------------------------------------
+
+      # ArgoCD Application Controller (sync status, health, reconciliation)
+      - job_name: argocd-application-controller
+        metrics_path: /metrics
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: argocd
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: argocd-metrics
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+
+      # ArgoCD Server Metrics (API server, UI, auth)
+      - job_name: argocd-server-metrics
+        metrics_path: /metrics
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: argocd
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: argocd-server-metrics
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+
+      # ArgoCD Repo Server Metrics (Git operations, repo caching)
+      - job_name: argocd-repo-server
+        metrics_path: /metrics
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: argocd
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: argocd-repo-server
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+
+      # ArgoCD Notifications Controller Metrics
+      - job_name: argocd-notifications-controller
+        metrics_path: /metrics
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: argocd
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: argocd-notifications-controller-metrics
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
