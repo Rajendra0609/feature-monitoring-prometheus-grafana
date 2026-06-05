@@ -1,0 +1,21 @@
+# Jenkins metrics Service - scrapes /prometheus endpoint
+# NOTE: Update the selector to match your Jenkins pod labels
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-metrics
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: jenkins
+    app.kubernetes.io/component: metrics
+spec:
+  # Use a broader selector to match common Jenkins deployments
+  # If this doesn't work, run: kubectl get pod -n jenkins -o jsonpath='{.items[*].metadata.labels}'
+  selector:
+    app: jenkins
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+

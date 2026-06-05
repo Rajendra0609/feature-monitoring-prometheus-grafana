@@ -1,0 +1,18 @@
+# .argocdignore — files ArgoCD will not try to apply to the cluster
+#
+# ArgoCD processes every YAML file in the source path unless excluded here.
+# Shell scripts and markdown are already skipped automatically, but any
+# .yaml that is not a declarative Kubernetes manifest MUST be listed here.
+
+# ── Runtime dump (kubectl get pod -o yaml output) — NOT a manifest ─────────
+02-monitoring/prometheus/50-prometheus-pod.yaml
+
+# ── ConfigMap generator script — the rendered YAML (20-configmap.yaml) is used ─
+02-monitoring/prometheus/20-configmap.sh
+
+# ── One-time patch notes — applied manually, not via GitOps ────────────────
+02-monitoring/grafana/patch.txt
+
+# ── Legacy shell scripts — replaced by ArgoCD sync ─────────────────────────
+apply-all.sh
+cleanup-namespace.sh

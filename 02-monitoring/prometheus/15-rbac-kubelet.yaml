@@ -1,0 +1,37 @@
+# Additional RBAC for Prometheus to scrape kubelet node metrics
+# (node/proxy, node/stats, node/metrics, node/log, node/spec, node/summary)
+# This complements 10-rbac.yaml which covers service discovery permissions.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-kubelet
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: prod-observability-v2
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes/proxy
+      - nodes/stats
+      - nodes/metrics
+      - nodes/log
+      - nodes/spec
+      - nodes/summary
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-kubelet
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: prod-observability-v2
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-kubelet
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring

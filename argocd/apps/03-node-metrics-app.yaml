@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability-node-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: prod-observability-v2
+    app.kubernetes.io/component: node-metrics
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"   # Wave 2 — node-exporter DaemonSet + Service + NetworkPolicy
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: observability
+
+  source:
+    repoURL: "REPLACE_WITH_YOUR_REPO_URL"
+    targetRevision: HEAD
+    path: 01-node-metrics
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: node-metrics
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false   # namespace created by observability-namespaces
