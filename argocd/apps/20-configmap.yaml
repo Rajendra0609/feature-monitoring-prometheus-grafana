@@ -214,26 +214,34 @@ data:
             regex: tcp-prometheus-servicemonitor
 
       # MetalLB speaker metrics
-        - job_name: metallb
-          scheme: https
+      # MetalLB speaker + controller metrics
+      - job_name: metallb
+        scheme: http
       
-          tls_config:
-            insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       
-          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: endpoints
       
-          kubernetes_sd_configs:
-            - role: endpoints
+        relabel_configs:
+          # Only MetalLB namespace
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: metallb-system
       
-          relabel_configs:
-            - source_labels: [__meta_kubernetes_namespace]
-              action: keep
-              regex: metallb-system
+          # Only metallb metrics service
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: metallb-metrics
       
-            - source_labels: [__meta_kubernetes_service_name]
-              action: keep
-              regex: metallb-metrics
+          # Only metrics port
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: monitoring
       
-            - source_labels: [__meta_kubernetes_endpoint_port_name]
-              action: keep
-              regex: monitoring
+          # Add pod/node labels
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+      
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
