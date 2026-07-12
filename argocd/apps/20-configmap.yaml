@@ -213,10 +213,12 @@ data:
             action: keep
             regex: tcp-prometheus-servicemonitor
 
-      # MetalLB speaker metrics
-      # MetalLB speaker + controller metrics
+      # MetalLB speaker metric
       - job_name: metallb
-        scheme: http
+        scheme: https
+      
+        tls_config:
+          insecure_skip_verify: true
       
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       
@@ -224,24 +226,14 @@ data:
           - role: endpoints
       
         relabel_configs:
-          # Only MetalLB namespace
           - source_labels: [__meta_kubernetes_namespace]
             action: keep
             regex: metallb-system
       
-          # Only metallb metrics service
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
             regex: metallb-metrics
       
-          # Only metrics port
           - source_labels: [__meta_kubernetes_endpoint_port_name]
             action: keep
             regex: monitoring
-      
-          # Add pod/node labels
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod
-      
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            target_label: node
