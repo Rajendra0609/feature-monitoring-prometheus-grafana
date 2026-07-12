@@ -213,10 +213,12 @@ data:
             action: keep
             regex: tcp-prometheus-servicemonitor
 
+      # MetalLB speaker metrics
       - job_name: metallb
         scheme: https
         tls_config:
           insecure_skip_verify: true
+        bearer_token: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImFYVzhYVFk1ek5XRURaWE1UM0tHTXhuSm1Mc3pWOV9UdG1Ib1hPdzhTMUEifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzgzODM2MzYwLCJpYXQiOjE3ODM4MzI3NjAsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiYTU3MjBjYmUtZmQyYS00ODRjLThjMzAtZTI1ZTY2OTMxOTYxIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJtZXRhbGxiLXN5c3RlbSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJzcGVha2VyIiwidWlkIjoiMWU5NjdlMDctMGNhZi00Yjg3LWIyOWItMGYxMDIwYzRmZTQ3In19LCJuYmYiOjE3ODM4MzI3NjAsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptZXRhbGxiLXN5c3RlbTpzcGVha2VyIn0.MsYnRnd-NSyU6JkTaIGOUYS5YZUAgc1A_6qqRJiktTe7rW0E6Jy0ndPIRPuXBnAjP1XewXaZVfpfNS8WM2ejiOV97etXyZy31tDB96m0fe8L_LAKDRss4-gqH1iGpa8bjCCbsIpgCwpu70hHU_TRMxGhPxA1NbpdZFrS8twGemMn2cAf1fnJLJlxAOY_ios9SoVg9TniDg4c0fDUAQvXEAf5bq-2Xyz6dol3jvRUvfUEQX51dSG7OdYLEDPS0VtBGaUWqLhOlntr6QnN3Wj22Iz26OXIhDDdgQqmliey_Xrt9TeGJ49txtaqzF4RiPCDW7f2gKYlKQZP75rjIr8knA"
         kubernetes_sd_configs:
           - role: endpoints
         relabel_configs:
