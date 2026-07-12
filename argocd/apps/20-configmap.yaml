@@ -213,8 +213,10 @@ data:
             action: keep
             regex: tcp-prometheus-servicemonitor
 
-      # MetalLB speaker + controller metrics
       - job_name: metallb
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
         kubernetes_sd_configs:
           - role: endpoints
         relabel_configs:
