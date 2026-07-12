@@ -183,3 +183,44 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_port_name]
             action: keep
             regex: metrics
+        # CoreDNS metrics
+      - job_name: coredns
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: kube-system
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: kube-dns
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+
+      # cert-manager metrics
+      - job_name: cert-manager
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: cert-manager
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: cert-manager
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: tcp-prometheus-servicemonitor
+
+      # MetalLB speaker + controller metrics
+      - job_name: metallb
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: metallb-system
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: monitoring
