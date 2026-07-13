@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: alertmanager-allow
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    # Prometheus (same namespace) pushing alerts to :9093
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9093
+  egress:
+    # DNS resolution (CoreDNS in kube-system) — required to resolve the SMTP
+    # smarthost and hooks.slack.com
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Outbound SMTP (587 STARTTLS / 465 SMTPS / 25) and HTTPS (Slack webhook)
+    # destinations are external, so this can't be scoped to a namespaceSelector.
+    # Restrict the ipBlock below to your mail relay / egress NAT CIDR if you
+    # want tighter control than "the internet".
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 25
+        - protocol: TCP
+          port: 465
+        - protocol: TCP
+          port: 587
+        - protocol: TCP
+          port: 443

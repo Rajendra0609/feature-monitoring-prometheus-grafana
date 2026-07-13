@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: prod-observability-v2
+data:
+  alerts.yml: |
+    groups:
+      - name: node-alerts
+        rules:
+          - alert: NodeExporterDown
+            expr: up{job="node-exporter"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Node exporter down ({{ $labels.instance }})"
+              description: "Node exporter on {{ $labels.instance }} has been unreachable for more than 2 minutes."
+
+          - alert: HighNodeCPUUsage
+            expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage on {{ $labels.instance }}"
+              description: "CPU usage has been above 85% for 10 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+
+          - alert: HighNodeMemoryUsage
+            expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage on {{ $labels.instance }}"
+              description: "Memory usage has been above 90% for 10 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+
+          - alert: NodeDiskSpaceLow
+            expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 10
+            for: 15m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Low disk space on {{ $labels.instance }}"
+              description: "Mountpoint {{ $labels.mountpoint }} on {{ $labels.instance }} has less than 10% free space."
+
+      - name: kubernetes-alerts
+        rules:
+          - alert: KubernetesPodCrashLooping
+            expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+              description: "Container {{ $labels.container }} restarted more than 3 times in the last 15 minutes."
+
+          - alert: KubernetesNodeNotReady
+            expr: kube_node_status_condition{condition="Ready", status="true"} == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Node {{ $labels.node }} is NotReady"
+              description: "Node {{ $labels.node }} has reported NotReady for more than 5 minutes."
+
+      - name: prometheus-self-alerts
+        rules:
+          - alert: PrometheusTargetMissing
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Scrape target down ({{ $labels.job }})"
+              description: "Target {{ $labels.instance }} for job {{ $labels.job }} has been down for more than 5 minutes."
+
+          - alert: PrometheusConfigReloadFailed
+            expr: prometheus_config_last_reload_successful != 1
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Prometheus config reload failed"
+              description: "The last Prometheus configuration reload did not succeed — scrape/alerting config may be stale."
+
+          - alert: AlertmanagerDown
+            expr: up{job="alertmanager"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Alertmanager is down"
+              description: "Prometheus cannot reach Alertmanager — notifications will not be delivered until this recovers."

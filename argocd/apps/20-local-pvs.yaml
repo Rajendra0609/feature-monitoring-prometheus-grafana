@@ -40,3 +40,26 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values: ["k8s-worker1"]
+---
+# Backs the Alertmanager StatefulSet's volumeClaimTemplate (PVC data-alertmanager-0).
+# Stores silences.gob / notification log so acked/silenced alerts survive restarts.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-alertmanager
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes: ["ReadWriteOnce"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /mnt/k8s-data/alertmanager
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: ["k8s-worker1"]
